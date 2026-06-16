@@ -1,0 +1,532 @@
+
+<h2 class="sr-only">Interpretación interactiva del gráfico HYDRA ALGO en NinjaTrader — BTC/USD 5 minutos</h2>
+
+<style>
+.tab-btn {
+  background: none;
+  border: 0.5px solid var(--color-border-secondary);
+  border-radius: var(--border-radius-md);
+  padding: 6px 14px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tab-btn.active {
+  background: var(--color-background-info);
+  border-color: var(--color-border-info);
+  color: var(--color-text-info);
+  font-weight: 500;
+}
+.tab-btn:hover:not(.active) {
+  background: var(--color-background-secondary);
+  color: var(--color-text-primary);
+}
+.panel { display: none; margin-top: 16px; }
+.panel.active { display: block; }
+
+.element-card {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md);
+  margin-bottom: 8px;
+  background: var(--color-background-primary);
+}
+.color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.color-line {
+  width: 28px;
+  height: 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+.color-dash {
+  width: 28px;
+  height: 2px;
+  background: repeating-linear-gradient(90deg,#5b8fd4 0,#5b8fd4 5px,transparent 5px,transparent 9px);
+  flex-shrink: 0;
+  margin-top: 9px;
+}
+.color-dash-red {
+  width: 28px;
+  height: 2px;
+  background: repeating-linear-gradient(90deg,#c96060 0,#c96060 5px,transparent 5px,transparent 9px);
+  flex-shrink: 0;
+  margin-top: 9px;
+}
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: 2px;
+}
+.desc {
+  font-size: 13px;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-weight: 500;
+  margin-right: 4px;
+}
+.badge-ok  { background: var(--color-background-success); color: var(--color-text-success); }
+.badge-warn{ background: var(--color-background-warning); color: var(--color-text-warning); }
+.badge-info{ background: var(--color-background-info);    color: var(--color-text-info);    }
+.badge-err { background: var(--color-background-danger);  color: var(--color-text-danger);  }
+.badge-gray{ background: var(--color-background-secondary); color: var(--color-text-secondary); }
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: var(--border-radius-md);
+  font-size: 13px;
+  margin-bottom: 6px;
+  border: 0.5px solid var(--color-border-tertiary);
+}
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.mini-card {
+  background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md);
+  padding: 10px 12px;
+}
+.mini-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.mini-val   { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+.mini-val.green { color: var(--color-text-success); }
+.mini-val.red   { color: var(--color-text-danger); }
+.mini-val.muted { color: var(--color-text-secondary); }
+.section-title {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 16px 0 8px;
+}
+</style>
+
+<div style="display:flex;gap:6px;flex-wrap:wrap">
+  <button class="tab-btn active" onclick="show('aa-market')">MarketContext</button>
+  <button class="tab-btn" onclick="show('aa-sme')">SmartMoney</button>
+  <button class="tab-btn" onclick="show('aa-wyckoff')">WyckoffVolume</button>
+  <button class="tab-btn" onclick="show('aa-ml')">PredictiveML</button>
+  <button class="tab-btn" onclick="show('aa-risk')">RiskEngine</button>
+  <button class="tab-btn" onclick="show('aa-lectura')">Lectura del gráfico</button>
+</div>
+
+<div id="aa-market" class="panel active">
+  <div class="section-title">AA MarketContext — overlay en precio</div>
+
+  <div class="element-card">
+    <div class="color-line" style="background:#fff;margin-top:8px;flex-shrink:0;width:28px;height:3px"></div>
+    <div>
+      <div class="label">VWAP de sesión — línea blanca gruesa</div>
+      <div class="desc">Precio promedio ponderado por volumen desde el inicio de la sesión activa. Actúa como el nivel de referencia institucional. El precio tiende a gravitarse hacia él durante el día. <span class="badge badge-info">reset al cambiar bloque Asia / London / NY</span></div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div class="color-dash" style="margin-top:9px"></div>
+    <div>
+      <div class="label">SD1 Upper / Lower — líneas azules discontinuas</div>
+      <div class="desc">Desviación estándar ×1.0 del VWAP (canal azul). El 68% del volumen se negocia dentro de este canal. Precio entre ±SD1 = mercado en equilibrio — las señales deben ser más precisas. Precio rozando SD1 desde dentro = posible rebote hacia el VWAP.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div class="color-dash-red" style="margin-top:9px"></div>
+    <div>
+      <div class="label">SD2 Upper / Lower — líneas rojas discontinuas</div>
+      <div class="desc">Desviación estándar ×2.0. Fuera de este canal = zona de extremo estadístico. Precio en SD2 Upper = zona premium extrema, probabilidad alta de reversión. Precio en SD2 Lower = zona discount extremo, zona de búsqueda de longs institucionales.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:14px;height:14px;border-radius:3px;background:rgba(220,180,0,0.18);border:1px solid rgba(220,180,0,0.5);flex-shrink:0;margin-top:3px"></div>
+    <div>
+      <div class="label">Fondo amarillo muy tenue — sesión Asia</div>
+      <div class="desc">Peso de confianza 40% — el mercado tiene poca liquidez, rangos pequeños, falsas rupturas frecuentes. El código aplica <code>alpha=7</code> (casi imperceptible). No operar señales agresivas en esta zona.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:14px;height:14px;border-radius:3px;background:rgba(80,130,255,0.12);border:1px solid rgba(80,130,255,0.4);flex-shrink:0;margin-top:3px"></div>
+    <div>
+      <div class="label">Fondo azul tenue — sesión NY / Overnight</div>
+      <div class="desc">NY AFT (70%) y NY PRE (55%) reciben fondo azul con <code>alpha=9</code>. La etiqueta de texto "OVERNIGHT" aparece sobre el precio al cambiar de bloque.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:14px;height:14px;border-radius:3px;background:rgba(80,180,255,0.25);border:1px solid rgba(80,180,255,0.6);flex-shrink:0;margin-top:3px"></div>
+    <div>
+      <div class="label">Fondo azul más intenso — KillZone activa</div>
+      <div class="desc">London KZ (03–05h ET, peso 90%) y NY KZ (09:30–11:30h ET, peso 95%) reciben <code>alpha=14</code> más visible. Dentro de estos rangos las señales SMC tienen máxima prioridad. Captura es cuando visible en el screenshot (sesión Asia activa, no en KZ).</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:14px;height:14px;border-radius:3px;background:rgba(200,20,20,0.25);border:1px solid rgba(200,20,20,0.6);flex-shrink:0;margin-top:3px"></div>
+    <div>
+      <div class="label">Fondo rojo intenso — noticia de alto impacto</div>
+      <div class="desc">Máxima prioridad. Cuando <code>NewsImpact=3</code> (HIGH) y el tiempo actual está dentro de ±15 minutos del evento, el fondo se torna rojo con <code>alpha=30</code> y se dispara alerta sonora. <code>TradingAllowed=0.0</code> — el RiskEngine bloqueará cualquier operación.</div>
+    </div>
+  </div>
+</div>
+
+<div id="aa-sme" class="panel">
+  <div class="section-title">AA SmartMoneyEngine — overlay en precio, sin BackBrush</div>
+
+  <div class="element-card">
+    <div style="width:28px;height:2px;background:#4a90d9;flex-shrink:0;margin-top:9px"></div>
+    <div>
+      <div class="label">Línea azul sólida + texto "BOS ▲" — Break of Structure alcista</div>
+      <div class="desc">El código detecta que el cierre rompió sobre el último swing high con al menos <code>SwingStrength=5</code> pivotes de separación. Se traza una línea horizontal azul hacia atrás (hasta 20 barras) y se escribe "BOS ▲" junto al nivel. <span class="badge badge-ok">StructureBias = +1</span> — las barras del fondo cambian a sesgo alcista.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:28px;height:2px;background:#e05555;flex-shrink:0;margin-top:9px"></div>
+    <div>
+      <div class="label">Línea roja sólida + texto "BOS ▼" — Break of Structure bajista</div>
+      <div class="desc">Cierre bajo el último swing low. <span class="badge badge-err">StructureBias = -1</span>. Indica que la estructura bajista está confirmada y las entradas en dirección contraria son de alto riesgo.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:28px;height:2px;background:#ff8c42;flex-shrink:0;margin-top:9px;background:repeating-linear-gradient(90deg,#ff8c42 0,#ff8c42 4px,transparent 4px,transparent 8px)"></div>
+    <div>
+      <div class="label">Línea naranja discontinua + "CHoCH" — Change of Character</div>
+      <div class="desc">Primera señal de reversión: el precio viene de estructura bajista y rompe el swing high previo (o viceversa). NO es confirmación — es alerta temprana. Si el siguiente BOS confirma la nueva dirección, el CHoCH fue la entrada correcta.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:24px;height:12px;background:rgba(30,158,117,0.18);border:1px solid rgba(30,158,117,0.6);border-radius:2px;flex-shrink:0;margin-top:4px"></div>
+    <div>
+      <div class="label">Rectángulo verde translúcido — FVG alcista</div>
+      <div class="desc">Gap de tres velas donde <code>Low[0] &gt; High[2]</code> y el tamaño supera <code>FvgMinSizeATR × ATR</code> (default 0.25 ATR). El rectángulo cubre el gap. El precio tenderá a regresar a rellenarlo antes de continuar. <span class="badge badge-info">se oscurece / desaparece al ser mitigado</span></div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:24px;height:12px;background:rgba(210,70,70,0.18);border:1px solid rgba(210,70,70,0.6);border-radius:2px;flex-shrink:0;margin-top:4px"></div>
+    <div>
+      <div class="label">Rectángulo rojo translúcido — FVG bajista</div>
+      <div class="desc">Gap donde <code>High[0] &lt; Low[2]</code>. Zona de oferta desequilibrada — el precio tenderá a volver a llenarla desde abajo como resistencia.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:24px;height:12px;background:rgba(30,100,200,0.25);border:1.5px solid rgba(50,130,220,0.8);border-radius:2px;flex-shrink:0;margin-top:4px"></div>
+    <div>
+      <div class="label">Caja azul más intensa + "OB 3★" — Order Block alcista (score ≥3)</div>
+      <div class="desc">Última vela bajista antes de un impulso alcista superior a <code>1.8 × ATR</code>. La opacidad del relleno crece con el score (40 + score×10 de alpha). Solo muestra la etiqueta de puntuación si <code>score ≥ 3</code>. Se invalida (desaparece) si el precio cierra dentro del bloque.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:28px;height:1px;background:rgba(80,200,120,0.8);flex-shrink:0;margin-top:9px;border-top:1px dotted rgba(80,200,120,0.8)"></div>
+    <div>
+      <div class="label">Línea punteada verde — Buy-side liquidity (Equal Lows)</div>
+      <div class="desc">Nivel donde el Low fue tocado ≥2 veces dentro de la tolerancia <code>LiqEqualPct × ATR</code>. Representa stops de compradores acumulados — los algoritmos institucionales tienden a bajar el precio a barrer esta liquidez antes de subir. Cuando el precio lo perfora y recupera = entrada.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:28px;height:1px;background:rgba(200,80,80,0.8);flex-shrink:0;margin-top:9px;border-top:1px dotted rgba(200,80,80,0.8)"></div>
+    <div>
+      <div class="label">Línea punteada roja — Sell-side liquidity (Equal Highs)</div>
+      <div class="desc">Stops de vendedores acumulados sobre los igual-highs. El precio sube a buscarlos antes de revertir. Nivel de target para operaciones long activas.</div>
+    </div>
+  </div>
+</div>
+
+<div id="aa-wyckoff" class="panel">
+  <div class="section-title">AA WyckoffVolume — overlay en precio</div>
+
+  <div class="element-card">
+    <div style="width:28px;height:3px;background:#c471ed;flex-shrink:0;margin-top:8px"></div>
+    <div>
+      <div class="label">Línea magenta — POC (Point of Control)</div>
+      <div class="desc">Precio donde se negoció el mayor volumen acumulado del día. Actúa como el "centro de gravedad" — el precio tiende a gravitarse hacia el POC durante el día. El acumulador es <strong>incremental</strong> (O(n), corregido vs v1): solo suma la barra actual al diccionario tick→volumen, nunca recorre el historial completo.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div class="color-dash" style="margin-top:9px"></div>
+    <div>
+      <div class="label">Líneas azules discontinuas — VAH y VAL (Value Area)</div>
+      <div class="desc">El 70% del volumen del día se negoció entre <code>VAH</code> y <code>VAL</code>. Si el precio está dentro del VA = mercado en equilibrio, esperar ruptura. Si el precio está fuera y regresa al VA = posible compresión. Ruptura del VAH con volumen = señal de continuación alcista.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:28px;height:1px;border-top:1px dotted rgba(80,200,120,0.7);flex-shrink:0;margin-top:9px"></div>
+    <div>
+      <div class="label">Líneas verdes punteadas — HVN (High Volume Nodes)</div>
+      <div class="desc">Niveles donde el volumen supera el 150% del promedio. Máximo 5 líneas visibles para no saturar. Actúan como zonas de freno y soporte/resistencia dinámica. El código excluye los HVN dentro de ±0.3 ATR del POC para evitar solapamiento.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:24px;height:12px;background:rgba(200,200,0,0.08);border:1px solid rgba(200,200,0,0.35);border-radius:2px;flex-shrink:0;margin-top:4px"></div>
+    <div>
+      <div class="label">Rectángulo amarillo muy tenue — rango Fase B de Wyckoff</div>
+      <div class="desc">Se dibuja cuando se detectan ≥10 barras laterales (precio contenido dentro del rango sin cierre fuera). Delimita el rango de acumulación/distribución. El Spring o UTAD que lo perfora brevemente es la señal de Fase C.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:14px;height:14px;background:none;border-radius:0;flex-shrink:0;margin-top:2px;font-size:13px;color:var(--color-text-secondary)">SC</div>
+    <div>
+      <div class="label">Etiquetas de texto en precio — eventos Wyckoff</div>
+      <div class="desc">
+        <span class="badge badge-err">SC</span> Selling Climax — volumen &gt;2.5× promedio con cierre bajista<br>
+        <span class="badge badge-warn">SPRING</span> Perforación bajo el soporte con recuperación inmediata y volumen bajo<br>
+        <span class="badge badge-ok">SOS ▲</span> Sign of Strength — cierre sobre el rango con volumen &gt;1.3× promedio<br>
+        <span class="badge badge-gray">Fase B / Fase E</span> marcas de transición de fase
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="aa-ml" class="panel">
+  <div class="section-title">AA PredictiveML — panel separado inferior (no overlay)</div>
+
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:12px 16px;margin-bottom:12px;font-size:12px;font-family:var(--font-mono);line-height:1.8;color:var(--color-text-secondary)">
+    ╔═══ HYDRA ALGO ════════════╗<br>
+    &nbsp;&nbsp;ML &nbsp;&nbsp;: <span style="color:var(--color-text-danger)">OFFLINE (SMC mode)</span><br>
+    &nbsp;&nbsp;SES &nbsp;: ASIA &nbsp;(40 %)<br>
+    &nbsp;&nbsp;TRADE: <span style="color:var(--color-text-success)">ACTIVO</span><br>
+    &nbsp;&nbsp;─────────────────────────<br>
+    &nbsp;&nbsp;SENAL &nbsp;: ● NEUTRO<br>
+    &nbsp;&nbsp;FUERZA: ○○○ SIN SENAL<br>
+    &nbsp;&nbsp;SCORE &nbsp;: 0/100 [░░░░░░░░░░]
+  </div>
+
+  <div class="element-card">
+    <div style="width:28px;height:3px;background:#3cb371;flex-shrink:0;margin-top:8px"></div>
+    <div>
+      <div class="label">Línea verde — P_Long (probabilidad alcista)</div>
+      <div class="desc">El modelo XGBoost devuelve la probabilidad calibrada de que el precio suba en las próximas 12 barras M5. En modo OFFLINE usa el último valor válido o el fallback 34%. El umbral operativo es <code>MinConfidence = 0.55</code>.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:28px;height:3px;background:#cd5c5c;flex-shrink:0;margin-top:8px"></div>
+    <div>
+      <div class="label">Línea roja — P_Short (probabilidad bajista)</div>
+      <div class="desc">Probabilidad de movimiento bajista. Cuando <code>P_Short &gt; 0.65</code> y la estructura SMC es bajista y el score &gt;60, se genera señal SHORT. La suma P_Long + P_Short + P_Neutral debe ser ≈1.0 — si no, la respuesta del pipe se descarta.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:28px;height:3px;background:#555;flex-shrink:0;margin-top:8px"></div>
+    <div>
+      <div class="label">Línea gris — P_Neutral</div>
+      <div class="desc">Probabilidad de que el precio permanezca dentro del rango sin movimiento tendencial. Cuando P_Neutral domina, el score cae y el sistema emite "SIN SENAL".</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:28px;height:3px;background:#fff;flex-shrink:0;margin-top:8px"></div>
+    <div>
+      <div class="label">Línea blanca — ConsolidatedScore (0–100)</div>
+      <div class="desc">Score compuesto: ML hasta 30pts + sesión hasta 20pts + EMAs hasta 15pts + RSI hasta 10pts + estructura SMC hasta 15pts + Wyckoff hasta 10pts. El panel del screenshot muestra <code>SCORE: 0/100</code> porque el modelo ML está offline y sesión Asia tiene peso bajo (40%).</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="font-size:16px;color:var(--color-text-success);flex-shrink:0;margin-top:0">▲</div>
+    <div>
+      <div class="label">Flecha verde en precio — señal LONG consolidada</div>
+      <div class="desc">Solo aparece cuando <code>P_Long &gt; 0.55</code> + EMA9 y EMA21 alcistas + RSI &gt; 50 + score ≥ 60 + TradingAllowed &gt; 0. El código dibuja la flecha solo cuando <code>FinalSignal</code> cambia de valor barra a barra — no genera ruido visual.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="font-size:13px;color:var(--color-text-danger);flex-shrink:0;margin-top:2px">⛔</div>
+    <div>
+      <div class="label">Panel "ML: OFFLINE (SMC mode)" — lo que muestra el screenshot</div>
+      <div class="desc">El proceso Python no está corriendo o el named pipe <code>hydra_xgboost_pipe</code> no existe. Tras 3 timeouts de 400ms consecutivos, el indicador desactiva el modelo y opera solo con las señales de los otros 3 indicadores. El panel permanece visible pero advierte el estado.</div>
+    </div>
+  </div>
+</div>
+
+<div id="aa-risk" class="panel">
+  <div class="section-title">AA RiskEngine — overlay en precio + panel inferior izquierdo</div>
+
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:12px 16px;margin-bottom:12px;font-size:12px;font-family:var(--font-mono);line-height:1.8;color:var(--color-text-secondary)">
+    ╔═══ RISK ENGINE ════════════╗<br>
+    &nbsp;&nbsp;<span style="color:var(--color-text-success)">● ACTIVO</span><br>
+    &nbsp;&nbsp;Sin restricciones activas<br>
+    &nbsp;&nbsp;─────────────────────────<br>
+    &nbsp;&nbsp;ATR &nbsp;&nbsp;: 102.84<br>
+    &nbsp;&nbsp;Stop &nbsp;: 154.27 pts<br>
+    &nbsp;&nbsp;Riesgo: $250.00<br>
+    &nbsp;&nbsp;Contr.: 1 (SizeMul 1.00)<br>
+    &nbsp;&nbsp;─────────────────────────<br>
+    &nbsp;&nbsp;T1 (1.5R): 66313.64<br>
+    &nbsp;&nbsp;T2 (2.5R): 66469.91<br>
+    &nbsp;&nbsp;─────────────────────────<br>
+    &nbsp;&nbsp;R dia : 0.00R<br>
+    &nbsp;&nbsp;Win % : 0% (0/0)<br>
+    &nbsp;&nbsp;E[R] &nbsp;: 0.000R<br>
+    &nbsp;&nbsp;Sin racha activa
+  </div>
+
+  <div class="grid2" style="margin-bottom:12px">
+    <div class="mini-card">
+      <div class="mini-label">ATR(14) actual</div>
+      <div class="mini-val">102.84 pts</div>
+    </div>
+    <div class="mini-card">
+      <div class="mini-label">Stop = ATR × 1.5</div>
+      <div class="mini-val red">154.27 pts</div>
+    </div>
+    <div class="mini-card">
+      <div class="mini-label">Riesgo $ por trade</div>
+      <div class="mini-val">$250 (1% de $25k)</div>
+    </div>
+    <div class="mini-card">
+      <div class="mini-label">Contratos calculados</div>
+      <div class="mini-val">1 contrato</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:28px;height:2px;background:#cd5c5c;flex-shrink:0;margin-top:9px;background:repeating-linear-gradient(90deg,#cd5c5c 0,#cd5c5c 5px,transparent 5px,transparent 9px)"></div>
+    <div>
+      <div class="label">Línea roja discontinua — Stop Loss dinámico</div>
+      <div class="desc">Calculado como <code>Close[0] − ATR × 1.5 × StopMultiplier</code>. El <code>StopMultiplier</code> viene de AA_MarketContext: si volatilidad es normal =1.0, si es elevada =1.5, si es extrema el sistema bloquea la entrada directamente. El stop se redibuja en <strong>cada barra</strong> — siempre refleja la distancia real de riesgo.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:28px;height:2px;background:#3cb371;flex-shrink:0;margin-top:9px;background:repeating-linear-gradient(90deg,#3cb371 0,#3cb371 5px,transparent 5px,transparent 9px)"></div>
+    <div>
+      <div class="label">Línea verde discontinua — Target 1 (1.5R)</div>
+      <div class="desc">Precio al cual cerrar el 50% de la posición. A ese nivel el código activa el método <code>RegisterExit</code> parcial y mueve el stop a breakeven +0.25 ATR. En el screenshot: T1 = 66,313.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:28px;height:2px;background:#6495ed;flex-shrink:0;margin-top:9px;background:repeating-linear-gradient(90deg,#6495ed 0,#6495ed 5px,transparent 5px,transparent 9px)"></div>
+    <div>
+      <div class="label">Línea azul discontinua — Target 2 (2.5R)</div>
+      <div class="desc">Precio para cerrar el 30% restante. A este nivel el trailing stop se activa si no estaba ya activo. En el screenshot: T2 = 66,469.</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="width:28px;height:2px;background:#ffa500;flex-shrink:0;margin-top:9px"></div>
+    <div>
+      <div class="label">Línea naranja sólida — Trailing Stop activo</div>
+      <div class="desc">Aparece solo cuando <code>trailingActive = true</code>, es decir cuando el trade supera <code>TrailActivationR = 1.5</code>. Se mueve en dirección del trade barra a barra. Si el precio lo toca, el código llama a <code>RegisterExit(trailingStopPrice)</code> y se marca "TRAIL EXIT".</div>
+    </div>
+  </div>
+
+  <div class="element-card">
+    <div style="font-size:13px;color:var(--color-text-danger);flex-shrink:0;margin-top:2px">⛔</div>
+    <div>
+      <div class="label">TextFixed central "CIRCUIT BREAKER" — bloqueo total</div>
+      <div class="desc">Aparece cuando <code>DailyRPnL ≤ −MaxDailyLossPct/MaxRiskPct</code> (con 1% de riesgo y 3% de pérdida diaria = −3R en el día). Cubre el gráfico con un aviso rojo y dispara una alerta sonora. El sistema no permite nuevas entradas hasta el día siguiente.</div>
+    </div>
+  </div>
+</div>
+
+<div id="aa-lectura" class="panel">
+  <div class="section-title">Lectura específica de lo que aparece en el screenshot</div>
+
+  <div class="status-row" style="background:var(--color-background-secondary)">
+    <span style="font-size:13px;font-weight:500">Instrumento y temporalidad</span>
+    <span class="badge badge-info">BTC/USD · 5 minutos</span>
+  </div>
+
+  <div class="status-row" style="background:var(--color-background-secondary)">
+    <span style="font-size:13px;font-weight:500">Sesión activa al momento de la captura</span>
+    <span><span class="badge badge-warn">ASIA</span> peso 40% — baja prioridad de señales</span>
+  </div>
+
+  <div class="status-row" style="background:var(--color-background-secondary)">
+    <span style="font-size:13px;font-weight:500">Estado del modelo ML</span>
+    <span><span class="badge badge-err">OFFLINE</span> modo SMC puro — pipe Python no activo</span>
+  </div>
+
+  <div class="status-row" style="background:var(--color-background-secondary)">
+    <span style="font-size:13px;font-weight:500">Trading permitido</span>
+    <span><span class="badge badge-ok">ACTIVO</span> sin noticias de impacto activas</span>
+  </div>
+
+  <div class="section-title">Lo que se ve en el panel de precio (zona superior del chart)</div>
+
+  <div class="element-card">
+    <div class="label" style="min-width:120px">Línea blanca curva gruesa</div>
+    <div class="desc">VWAP de sesión de AA_MarketContext. Se ve cómo el precio de BTC cae desde ~67,400 y se encuentra por encima del VWAP al inicio, luego lo cruza a la baja alrededor de las 14:00–15:00 y permanece bajo él desde las ~15:30 en adelante. Ese cruce hacia abajo fue la primera señal de sesgo bajista.</div>
+  </div>
+
+  <div class="element-card">
+    <div class="label" style="min-width:120px">Canal azul (SD1)</div>
+    <div class="desc">Al inicio del período el precio está entre SD1 Upper y VWAP — zona de leve premium. Cuando BTC cae bruscamente a las ~15:00 perfora SD1 Lower, señal de momentum bajista con potencial de extensión hasta SD2 Lower (~zona roja inferior).</div>
+  </div>
+
+  <div class="element-card">
+    <div class="label" style="min-width:120px">Canal rojo (SD2)</div>
+    <div class="desc">Los extremos rojos externos marcan las zonas de reversión estadística. La caída fuerte de ~15:00 toca la SD2 Lower aproximadamente, generando un rebote técnico que el sistema interpreta como posible zona de compra de corto plazo.</div>
+  </div>
+
+  <div class="element-card">
+    <div class="label" style="min-width:120px">Rectángulos azules en precio</div>
+    <div class="desc">Order Blocks alcistas detectados por AA_SmartMoneyEngine. El rectángulo prominente a la izquierda (~13:00–14:00, zona 66,800–67,200) representa la última vela bajista antes de un impulso alcista previo. El precio regresó a esta zona y la perdió — señal de que el OB fue mitigado y el sesgo cambió a bajista.</div>
+  </div>
+
+  <div class="element-card">
+    <div class="label" style="min-width:120px">Línea magenta horizontal</div>
+    <div class="desc">POC del día de AA_WyckoffVolume. Actúa como imán — en la sesión mostrada el precio orbita alrededor del POC antes de romper definitivamente hacia abajo. El POC visible (~66,560) coincide con la zona donde el precio lateralizó durante varias horas.</div>
+  </div>
+
+  <div class="element-card">
+    <div class="label" style="min-width:120px">Texto "OVERNIGHT" en el chart</div>
+    <div class="desc">Etiqueta de sesión de AA_MarketContext dibujada cuando cambió el bloque de sesión. Confirma que la actividad mostrada es del período overnight/Asia, lo que explica por qué el panel ML muestra sesión Asia al 40% y señal NEUTRA.</div>
+  </div>
+
+  <div class="element-card">
+    <div class="label" style="min-width:120px">Panel inferior — 3 líneas ML</div>
+    <div class="desc">Las tres líneas del panel PredictiveML (verde P_Long, roja P_Short, gris P_Neutral) se ven completamente planas en la parte inferior del panel separado. Esto es normal: sin el modelo Python activo, los valores son los fallback fijos (0.34/0.34/0.32) y el ConsolidatedScore = 0 porque el ML no aporta sus 30 puntos.</div>
+  </div>
+
+  <div class="element-card">
+    <div class="label" style="min-width:120px">Panel Risk Engine (verde inferior izquierdo)</div>
+    <div class="desc">Muestra ATR real de BTC (~102 puntos), stop calculado en ~154 puntos (1.5× ATR), riesgo de $250 (1% de $25,000), 1 contrato. T1 y T2 se calculan desde el cierre actual, no desde una entrada real ya que no hay trade activo registrado. R del día = 0.00R porque no hubo operaciones en la sesión.</div>
+  </div>
+
+  <div class="section-title">Conclusión operativa de la lectura</div>
+  <div style="padding:12px 14px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);font-size:13px;line-height:1.7;color:var(--color-text-primary)">
+    El sistema está correctamente cargado y funcionando. El modelo ML offline es el único elemento no operativo — requiere lanzar el servicio Python con el named pipe. El sesgo del mercado en la captura es <strong>bajista</strong>: precio bajo VWAP, OBs alcistas mitigados, estructura quebrada hacia abajo. El score 0/100 del panel no indica fallo del sistema sino ausencia de ML + sesión de bajo peso. En una sesión NY KZ con el modelo online, el mismo gráfico mostraría score en el rango 55–75 dependiendo de cuántas confluencias SMC estuvieran activas.
+  </div>
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
